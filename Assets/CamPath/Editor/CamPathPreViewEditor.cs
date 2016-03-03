@@ -38,7 +38,15 @@ public class CamPathPreViewEditor : Editor
 
         ///首先要计算好parent(camera)的坐标
         ///
-        script.transform.parent.parent.GetComponent<CamPathManager>().SettleCamera();
+       // script.transform.parent.parent.GetComponent<CamPathManager>().PositionToFocusObject();
+
+        CamPathManager manager = GameObject.FindObjectOfType<CamPathManager>();
+        GameObject charactor = GameObject.Find(manager.charactorName);
+        if (charactor)
+        {
+            manager.transform.position = charactor.transform.position;
+        }
+
 
         if (SceneView.currentDrawingSceneView)
         {
@@ -46,6 +54,8 @@ public class CamPathPreViewEditor : Editor
         }
         savedPos = script.transform.parent.position;
         savedRot = script.transform.parent.rotation.eulerAngles;
+
+     
     }
     public override void OnInspectorGUI()
     {
@@ -68,7 +78,7 @@ public class CamPathPreViewEditor : Editor
             }
         }
         GUILayout.Label("pitch up");
-        pitchUp = GUILayout.HorizontalSlider(pitchUp, 10, -10);
+        pitchUp = GUILayout.HorizontalSlider(pitchUp, 20, -20);
         Vector3 rot = savedRot;
         rot.x -= pitchUp;
         script.transform.parent.rotation = Quaternion.Euler(rot);

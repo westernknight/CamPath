@@ -31,12 +31,40 @@ public class CamPathManagerEditor : Editor
         style.normal.textColor = Color.white;
 
         script = (CamPathManager)target;
-        
+
         CreateChar();
-        script.SettleCamera();
+        
+
+        GameObject charactor = GameObject.Find(script.charactorName);
+        if (charactor)
+        {
+           script. transform.position = charactor.transform.position;
+        }
+
+
         CreateFullMapCamera();
-        
-        
+
+        CreateFunnyCamera();
+    }
+    void CreateFunnyCamera()
+    {
+        if (Camera.main == null)
+        {
+            GameObject tmp = new GameObject("Camera", typeof(Camera), typeof(AudioListener));
+            tmp.tag = "MainCamera";
+            GameObject obj = GameObject.Find(script.fullMapCameraMaxName);
+
+            Camera.main.transform.position = obj.transform.position;
+            Camera.main.transform.rotation = obj.transform.rotation;
+        }
+        {
+            FunnyCamera cam = Camera.main.GetComponent<FunnyCamera>();
+            if (cam == null)
+            {
+                Camera.main.gameObject.AddComponent<FunnyCamera>();
+            }
+        }
+       
     }
     /// <summary>
     /// 创建2个基本的摄像头
@@ -57,7 +85,7 @@ public class CamPathManagerEditor : Editor
                 GameObject charactor = GameObject.Find(script.charactorName);
                 //camera.transform.position = SceneView.currentDrawingSceneView.camera.transform.position;
                 //camera.transform.rotation = SceneView.currentDrawingSceneView.camera.transform.rotation;
-                camera.transform.position = (charactor.transform.up + charactor.transform.forward).normalized * 5 + charactor.transform.position;
+                camera.transform.position = (charactor.transform.up + charactor.transform.right).normalized * 15 + charactor.transform.position;
                 camera.transform.LookAt(charactor.transform);
 
                 camera.transform.localScale = Vector3.one;
@@ -65,7 +93,7 @@ public class CamPathManagerEditor : Editor
 
                 GameObject preView = new GameObject("PreView");
                 preView.transform.parent = camera.transform;
-                preView.transform.localPosition = Vector3.zero;
+                preView.transform.localPosition = Vector3.zero; 
                 preView.transform.localRotation = Quaternion.identity;
                 preView.transform.localScale = Vector3.one;
                 preView.AddComponent<CamPathPreView>();
@@ -74,7 +102,7 @@ public class CamPathManagerEditor : Editor
                 camera.transform.parent = script.transform;
                 //camera.transform.position = SceneView.currentDrawingSceneView.camera.transform.position;
                 //camera.transform.rotation = SceneView.currentDrawingSceneView.camera.transform.rotation;
-                camera.transform.position = (charactor.transform.up + charactor.transform.forward).normalized * 4 + charactor.transform.position;
+                camera.transform.position = (charactor.transform.up + charactor.transform.right).normalized * 14 + charactor.transform.position;
                 camera.transform.LookAt(charactor.transform);
                 camera.transform.localScale = Vector3.one;
                 camera.AddComponent<CamPathObject>();
@@ -86,7 +114,7 @@ public class CamPathManagerEditor : Editor
                 preView.transform.localScale = Vector3.one;
                 preView.AddComponent<CamPathPreView>();
                 //如果有，就读取配置
-                ReadConfig();
+                //ReadConfig();
             }
 
         }
@@ -94,11 +122,11 @@ public class CamPathManagerEditor : Editor
     public override void OnInspectorGUI()
     {
         DrawDefaultInspector();
-        
-       
 
 
-       
+
+
+
 
 
         GUILayout.Label("Camera Editor");
@@ -114,15 +142,35 @@ public class CamPathManagerEditor : Editor
 
         if (GUILayout.Button("Save", GUILayout.Width(100f)))
         {
-            SaveConfig();
+            ExtensionMethodsEditor.SaveChildObjectPropertyToJsonFile(script.gameObject);
+            //SaveConfig();
         }
         if (GUILayout.Button("Load", GUILayout.Width(100f)))
         {
-            ReadConfig();
+
+            ExtensionMethodsEditor.ReadJsonFileDataToChildObjectProperty(script.gameObject);
+            for (int i = 0; i < script.transform.childCount; i++)
+            {
+                script.transform.GetChild(i).gameObject.AddComponent<CamPathObject>();
+
+                GameObject preView = new GameObject("PreView");
+                preView.transform.parent = script.transform.GetChild(i).gameObject.transform;
+                preView.transform.localPosition = Vector3.zero;
+                preView.transform.localRotation = Quaternion.identity;
+                preView.transform.localScale = Vector3.one;
+                preView.AddComponent<CamPathPreView>();
+
+            }
+            GameObject charactor = GameObject.Find(script.charactorName);
+            if (charactor)
+            {
+                script.transform.position = charactor.transform.position;
+            }
+            //ReadConfig();
         }
         EditorGUILayout.EndHorizontal();
 
-        GUILayout.Label("\nCamera Running Test");
+        GUILayout.Label("\nTest");
 
         for (int i = 0; i < script.transform.childCount; i++)
         {
@@ -133,14 +181,14 @@ public class CamPathManagerEditor : Editor
                 {
                     if (Application.isPlaying)
                     {
-                        script.AlignViewToObject(obj.gameObject);
+                        script.AlignViewToCameraObject(obj.gameObject);
                     }
                     else
                     {
                         Camera.main.transform.position = obj.transform.position;
                         Camera.main.transform.rotation = obj.transform.rotation;
                     }
-                    
+
                 }
             }
         }
@@ -150,7 +198,7 @@ public class CamPathManagerEditor : Editor
         GameObject cameraMax = GameObject.Find(script.fullMapCameraMaxName);
         GameObject cameraMin = GameObject.Find(script.fullMapCameraMinName);
         //if no manager object was found
-        if (cameraMax != null && cameraMin!=null)
+        if (cameraMax != null && cameraMin != null)
         {
             GameObject charactor = GameObject.Find(script.charactorName);
 
@@ -159,7 +207,7 @@ public class CamPathManagerEditor : Editor
                 LitJson.JsonData allData = new LitJson.JsonData();
                 allData.SetJsonType(LitJson.JsonType.Array);
 
-   
+
                 allData.Add(charactor.transform.InverseTransformPoint(cameraMax.transform.position).x);
                 allData.Add(charactor.transform.InverseTransformPoint(cameraMax.transform.position).y);
                 allData.Add(charactor.transform.InverseTransformPoint(cameraMax.transform.position).z);
@@ -186,7 +234,7 @@ public class CamPathManagerEditor : Editor
                 sw.Close();
                 Debug.Log("save ok: " + path);
             }
-            
+
         }
         else
         {
@@ -263,7 +311,7 @@ public class CamPathManagerEditor : Editor
                         }
                     }
                 }
-                
+
             }
         }
         else
@@ -290,8 +338,11 @@ public class CamPathManagerEditor : Editor
     }
     void CreateChar()
     {
-      
+
         //search for a manager object within current scene
+
+        
+
         GameObject charactor = GameObject.Find(script.charactorName);
 
         //if no manager object was found
@@ -302,10 +353,15 @@ public class CamPathManagerEditor : Editor
             {
                 Vector3 pos = SceneView.currentDrawingSceneView.camera.transform.TransformVector(0, 0, 5);
                 charactor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                charactor.GetComponent<BoxCollider>().enabled = false;
+                charactor.GetComponent<MeshRenderer>().enabled = false;
                 charactor.name = script.charactorName;
-                charactor.transform.position = pos + SceneView.currentDrawingSceneView.camera.transform.position;         
+                charactor.transform.position = pos + SceneView.currentDrawingSceneView.camera.transform.position;
+                charactor.AddComponent<CamPathCharactor>().CreateStartPosition() ;
+
+                Selection.activeGameObject = charactor;
             }
-           
+
         }
     }
     public void CreateNewCamera()
@@ -339,7 +395,7 @@ public class CamPathManagerEditor : Editor
 }
 public class CreateCamPathManager : EditorWindow
 {
-    [MenuItem("Window/地图编辑器/CamPath Manager")]
+    [MenuItem("Window/地图管理器/CamPath Manager")]
     //initialize method
     static void Init()
     {
