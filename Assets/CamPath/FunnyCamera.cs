@@ -45,6 +45,7 @@ public class FunnyCamera : MonoBehaviour
     public float boundingSphereRadius = 0.5f;
 
     public LayerMask collisionMask = -1;
+
     #endregion
 
     #region Private Variable Region
@@ -123,6 +124,7 @@ public class FunnyCamera : MonoBehaviour
     float hfovAngle;
     float wfovAngle;
 
+    
     #endregion
 
     #region System Callback Function Region
@@ -138,6 +140,9 @@ public class FunnyCamera : MonoBehaviour
         maxRot = GameObject.Find(CamPathManager.instance.fullMapCameraMaxName).transform.rotation;
         minRot = GameObject.Find(CamPathManager.instance.fullMapCameraMinName).transform.rotation;
 
+       
+
+
         transform.position = actuallyPos = maxPos;
         transform.rotation = maxRot;
         isLerpTarget = false;
@@ -147,7 +152,6 @@ public class FunnyCamera : MonoBehaviour
         {
             distance = Vector3.Distance(transform.position, focusObject.transform.position);
         }
-
         accumulateZoom = accumulateZoomMax;
         calculationParam = new GameObject("calc");
         calculationParam.transform.parent = transform;
@@ -166,6 +170,9 @@ public class FunnyCamera : MonoBehaviour
         cameraWorldWidth = Mathf.Tan(wfovRad) * distance;
         cameraWorldHeight = Mathf.Tan(hfovRad) * distance;
 
+        MapManager.Init();
+        mapSize.x = MapManager.Instance.cellDiameterSize * MapManager.Instance.totalColNum;
+        mapSize.y = MapManager.Instance.cellDiameterSize * MapManager.Instance.totalRowNum;
 
 
 
@@ -183,9 +190,7 @@ public class FunnyCamera : MonoBehaviour
 
             Gizmos.DrawWireSphere(transform.position, boundingSphereRadius);
 
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(new Vector3(upCameraPosition.x, focusObject.transform.position.y, upCameraPosition.z), boundingSphereRadius);
-            
+  
             //画出摄像机四边到平面的4个点
             //Vector3 tmp = upCameraPosition;
             //tmp.y = 0;
@@ -239,7 +244,7 @@ public class FunnyCamera : MonoBehaviour
         ///是否用缓动
         transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * 10);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 10);
-
+        
       
 
         if (isLockInput)
@@ -321,8 +326,8 @@ public class FunnyCamera : MonoBehaviour
 
     
                 //控制摄像机范围
-
-                ReCalculateCameraPosition(upCameraPosition - brelpos);
+                Vector3 direct = Quaternion.AngleAxis(CamPathManager.instance.mapAngle, Vector3.up) * (-brelpos);
+                ReCalculateCameraPosition(upCameraPosition + direct);
 
                 lastMousePosition = newMousePos;
             }
@@ -353,7 +358,43 @@ public class FunnyCamera : MonoBehaviour
         //| |
         //1-2
 
+#if false //第二种边界算法
+      if ((tmp - point4).z < 0)
+        {
+            upCameraPosition.z += -(tmp - point4).z;
+        }
+        if ((tmp - point4).x < 0)
+        {
+            upCameraPosition.x += -(tmp - point4).x;
+        }
+        if ((tmp - point2).z > mapSize.x)
+        {
 
+            upCameraPosition.z -= (tmp - point2).z - mapSize.x;
+        }
+        if ((tmp - point2).x > mapSize.y)
+        {
+            upCameraPosition.x -= (tmp - point2).x - mapSize.y;
+        }
+#else
+        //|<-z轴->|   x轴
+        if (upCameraPosition.z < cameraWorldWidth)
+        {
+            upCameraPosition.z = cameraWorldWidth;
+        }
+        else if (upCameraPosition.z > mapSize.x - cameraWorldWidth)
+        {
+            upCameraPosition.z = mapSize.x - cameraWorldWidth;
+        }
+        if (upCameraPosition.x < cameraWorldHeight)
+        {
+            upCameraPosition.x = cameraWorldHeight;
+        }
+        else if (upCameraPosition.x > mapSize.y - cameraWorldHeight)
+        {
+            upCameraPosition.x = mapSize.y - cameraWorldHeight;
+        }
+#endif
         //ray cast to floor
         
        calculationParam.transform.position = upCameraPosition;
