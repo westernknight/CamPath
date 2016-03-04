@@ -35,6 +35,16 @@ public class CamPathObjectEditor : Editor
         {
             script.transform.position = SceneView.currentDrawingSceneView.camera.transform.position;
             script.transform.rotation = SceneView.currentDrawingSceneView.camera.transform.rotation;
+
+            GameObject.DestroyImmediate(script.transform.GetChild(0).gameObject);
+            GameObject preView = new GameObject("PreView");
+            preView.transform.parent = script.transform;
+            preView.transform.localPosition = Vector3.zero;
+            preView.transform.localRotation = Quaternion.identity;
+            preView.transform.localScale = Vector3.one;
+            preView.AddComponent<CamPathPreView>();
+
+           
         }
     }
 }

@@ -19,19 +19,16 @@ public class CamPathPreViewEditor : Editor
 
     private CamPathPreView script;
 
-    float moveForward = 0;
-    float moveUp = 0;
-    float pitchUp = 0;
-    Vector3 savedPos;
-    Vector3 savedRot;
+
+
+    
 
     Vector3 lastPos;
     Vector3 lastRot;
 
-    float yaw = 0;
     CamPathManager manager;
-    float savedMapAngle;
-    float lastAngle;
+    
+
     void OnEnable()
     {
 
@@ -60,31 +57,29 @@ public class CamPathPreViewEditor : Editor
         //计算现在的方向投影到xz平面上
         Vector3 currentDirectToXZPlaneVec =  currentDirect;
         currentDirectToXZPlaneVec.y = 0;
-        //最终保存角度   //Vector3.Angle没有正负数
-        //savedMapAngle = Vector3.Angle(currentDirectToXZPlaneVec, Vector3.right);//x轴对着镜头，所以是以Vector3.right轴取角度
-        savedMapAngle = AngleSigned(currentDirectToXZPlaneVec, Vector3.right, Vector3.up);
+       
 
-
+ 
 
         if (SceneView.currentDrawingSceneView)
         {
             SceneView.currentDrawingSceneView.AlignViewToObject(script.transform.parent);
         }
-        savedPos = script.transform.parent.position;
-        savedRot = script.transform.parent.rotation.eulerAngles;
+        if (script.init == false)
+        {
+            //最终保存角度
+            script.savedMapAngle = Vector3.Angle(currentDirectToXZPlaneVec, Vector3.right);//x轴对着镜头，所以是以Vector3.right轴取角度
+            script.savedPos = script.transform.parent.position;
+            script.init = true;
+        }
+        
 
 
     }
 
     GUIStyle style = new GUIStyle();
 
-    public  float AngleSigned(Vector3 v1, Vector3 v2, Vector3 n)
-    {
-        return -Mathf.Atan2(
-            Vector3.Dot(n, Vector3.Cross(v1, v2)),
-            Vector3.Dot(v1, v2)) * Mathf.Rad2Deg;
-    }
-  
+
     public void OnSceneGUI()
     {
        // Handles.SphereCap(0, currentDirectToXZPlaneVecCap+manager.transform.position, Quaternion.identity, 1);
@@ -97,18 +92,25 @@ public class CamPathPreViewEditor : Editor
     public override void OnInspectorGUI()
     {
         GUILayout.Label("up");
-        moveUp = GUILayout.HorizontalSlider(moveUp, -10, 10);
-
-
+        GUILayout.BeginHorizontal();
+        script.moveUp = GUILayout.HorizontalSlider(script.moveUp, -20, 20);
+        script.moveUp = EditorGUILayout.FloatField(script.moveUp, GUILayout.Width(50));
+        GUILayout.EndHorizontal();
         GUILayout.Label("forward");
-        moveForward = GUILayout.HorizontalSlider(moveForward, 10, -10);
-
-        Vector3 inputPos = savedPos + script.transform.parent.forward * moveForward + script.transform.parent.up * moveUp;
+        GUILayout.BeginHorizontal();
+        script.moveForward = GUILayout.HorizontalSlider(script.moveForward, 50, -50);
+        script.moveForward = EditorGUILayout.FloatField(script.moveForward, GUILayout.Width(50));
+        GUILayout.EndHorizontal();
+        Vector3 inputPos = script.savedPos + script.transform.parent.forward * script.moveForward + script.transform.parent.up * script.moveUp;
 
 
         GUILayout.Label("yaw");
-        yaw = GUILayout.HorizontalSlider(yaw, 45, -45);
-        float mapAngle = savedMapAngle+yaw;
+        GUILayout.BeginHorizontal();
+        script.yaw = GUILayout.HorizontalSlider(script.yaw, 170, -170);
+        script.yaw = EditorGUILayout.FloatField(script.yaw, GUILayout.Width(50));
+        GUILayout.EndHorizontal();
+
+        float mapAngle = script.savedMapAngle + script.yaw;
         //当前摄像机对于focus的方向
         Vector3 currentDirect = inputPos - manager.transform.position;
         //计算现在的方向投影到xz平面上
@@ -116,7 +118,7 @@ public class CamPathPreViewEditor : Editor
         currentDirectToXZPlaneVec.y = 0;
         //读取编辑器叠加的角度
         //Vector3.right旋转角度后变为targetDirect        
-        Vector3 targetDirect = Quaternion.AngleAxis(mapAngle, Vector3.up ) * Vector3.right;
+        Vector3 targetDirect = Quaternion.AngleAxis(mapAngle, Vector3.up) * Vector3.right ;
         //targetDirect转为投影xz平面上的长度
         targetDirect = targetDirect * currentDirectToXZPlaneVec.magnitude;
         //y方向还原，targetDirect就是最终的方向
@@ -125,7 +127,7 @@ public class CamPathPreViewEditor : Editor
         script.transform.parent.position = targetDirect + manager.transform.position;
         script.transform.parent.LookAt(manager.transform);
 
-     
+
         if (lastPos != script.transform.parent.position)
         {
             lastPos = script.transform.parent.position;

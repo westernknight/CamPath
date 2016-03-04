@@ -137,6 +137,13 @@ public class FunnyCamera : MonoBehaviour
         maxRot = GameObject.Find(CamPathManager.instance.fullMapCameraMaxName).transform.rotation;
         minRot = GameObject.Find(CamPathManager.instance.fullMapCameraMinName).transform.rotation;
 
+       
+
+
+
+
+
+
         transform.position = actuallyPos = maxPos;
         transform.rotation = maxRot;
         isLerpTarget = false;
@@ -145,6 +152,7 @@ public class FunnyCamera : MonoBehaviour
         if (focusObject)
         {
             distance = Vector3.Distance(transform.position, focusObject.transform.position);
+
             //现在的方向     摄像机-焦点
             Vector3 currentDirect = maxPos - focusObject.transform.position;
 
@@ -153,6 +161,7 @@ public class FunnyCamera : MonoBehaviour
             currentDirectToXZPlaneVec.y = 0;
             //最终保存角度
             mapAngle = Vector3.Angle(currentDirectToXZPlaneVec, Vector3.right);//x轴对着镜头，所以是以Vector3.right轴取角度
+
         }
         accumulateZoom = accumulateZoomMax;
         calculationParam = new GameObject("calc");
@@ -172,8 +181,7 @@ public class FunnyCamera : MonoBehaviour
         cameraWorldWidth = Mathf.Tan(wfovRad) * distance;
         cameraWorldHeight = Mathf.Tan(hfovRad) * distance;
 
-
-
+ 
     }
     void OnDrawGizmos()
     {
@@ -351,6 +359,10 @@ public class FunnyCamera : MonoBehaviour
 
         Vector3 tmp = upCameraPosition;
         upCameraPosition = targetPos;
+        //4-3
+        //| |
+        //1-2
+
 
         //ray cast to floor
         
@@ -383,6 +395,50 @@ public class FunnyCamera : MonoBehaviour
     #region Private Custom Function Region
 
 
+
+#if false
+       private void CentrePositionTrace()
+    {
+        centrePositionRay.origin = transform.position;
+        centrePositionRay.direction = transform.forward;
+
+
+
+        if (Physics.Raycast(centrePositionRay, out rayInfo))
+        {
+            //其实这里是做击中判断操作
+            centrePosition = rayInfo.point;
+        }
+    }
+    private void MapLitmitCalculate()
+    {
+        real_width = distance * Screen.width * Mathf.Tan(Camera.main.fieldOfView / 2 * Mathf.Deg2Rad) / Screen.height;
+        real_height = distance * Mathf.Tan(Camera.main.fieldOfView / 2 * Mathf.Deg2Rad);
+        centrePositionRay = new Ray(transform.position, transform.forward);
+    }
+
+    private void MapLitmitJudge(ref Vector3 Pos)
+    {
+        return;
+        if (centrePosition.z + Mathf.Abs(Pos.z) + real_width > litmit_maxZ)
+        {
+            Pos.z -= centrePosition.z + Mathf.Abs(Pos.z) + real_width - litmit_maxZ;
+            //Pos.z = litmit_maxZ - real_width;
+        }
+        if (centrePosition.z - Mathf.Abs(Pos.z) - real_width < litmit_minZ)
+        {
+            Pos.z += litmit_minZ - (centrePosition.z - Mathf.Abs(Pos.z) - real_width);
+        }
+        if (centrePosition.x + Mathf.Abs(Pos.x) + real_height > litmit_maxX)
+        {
+            Pos.x -= centrePosition.x + Mathf.Abs(Pos.x) + real_height - litmit_maxX;
+        }
+        if (centrePosition.x - Mathf.Abs(Pos.x) - real_height < litmit_minX)
+        {
+            Pos.x += litmit_minX - (centrePosition.x - Mathf.Abs(Pos.x) - real_height);
+        }
+    }
+#endif
 
     #endregion
 }

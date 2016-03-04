@@ -15,11 +15,20 @@ using System.Collections.Generic;
 
 public class CamPathPreView : MonoBehaviour {
 
-	void Start () {
+    [HideInInspector]
+    public bool init = false;
+    [HideInInspector]
+    public float moveForward;
+    [HideInInspector]
+    public float moveUp;
+    [HideInInspector]
+    public float yaw;
+
+    [HideInInspector]
+    public Vector3 savedPos;
+
+    [HideInInspector]
+    public float savedMapAngle;
+
 	
-	}
-	
-	void Update () {
-	
-	}
 }
