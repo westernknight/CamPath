@@ -59,7 +59,6 @@ public class CamPathManager : MonoBehaviour
         Instantaneous,
         AlignTo,
     }
-    public float mapAngle = 0;
     public AlignMethod alignMethod = AlignMethod.AlignTo;
     void Awake()
     {

@@ -143,7 +143,6 @@ public class CamPathManagerEditor : Editor
         if (GUILayout.Button("Save", GUILayout.Width(100f)))
         {
             ExtensionMethodsEditor.SaveChildObjectPropertyToJsonFile(script.gameObject);
-            //SaveConfig();
         }
         if (GUILayout.Button("Load", GUILayout.Width(100f)))
         {
@@ -166,7 +165,6 @@ public class CamPathManagerEditor : Editor
             {
                 script.transform.position = charactor.transform.position;
             }
-            //ReadConfig();
         }
         EditorGUILayout.EndHorizontal();
 
@@ -191,132 +189,6 @@ public class CamPathManagerEditor : Editor
 
                 }
             }
-        }
-    }
-    void SaveConfig()
-    {
-        GameObject cameraMax = GameObject.Find(script.fullMapCameraMaxName);
-        GameObject cameraMin = GameObject.Find(script.fullMapCameraMinName);
-        //if no manager object was found
-        if (cameraMax != null && cameraMin != null)
-        {
-            GameObject charactor = GameObject.Find(script.charactorName);
-
-            if (charactor != null)
-            {
-                LitJson.JsonData allData = new LitJson.JsonData();
-                allData.SetJsonType(LitJson.JsonType.Array);
-
-
-                allData.Add(charactor.transform.InverseTransformPoint(cameraMax.transform.position).x);
-                allData.Add(charactor.transform.InverseTransformPoint(cameraMax.transform.position).y);
-                allData.Add(charactor.transform.InverseTransformPoint(cameraMax.transform.position).z);
-                allData.Add(cameraMax.transform.rotation.x);
-                allData.Add(cameraMax.transform.rotation.y);
-                allData.Add(cameraMax.transform.rotation.z);
-                allData.Add(cameraMax.transform.rotation.w);
-                allData.Add(charactor.transform.InverseTransformPoint(cameraMin.transform.position).x);
-                allData.Add(charactor.transform.InverseTransformPoint(cameraMin.transform.position).y);
-                allData.Add(charactor.transform.InverseTransformPoint(cameraMin.transform.position).z);
-                allData.Add(cameraMin.transform.rotation.x);
-                allData.Add(cameraMin.transform.rotation.y);
-                allData.Add(cameraMin.transform.rotation.z);
-                allData.Add(cameraMin.transform.rotation.w);
-                string path = Application.streamingAssetsPath + "/Config/Camera.json";
-
-                string dir = Path.GetDirectoryName(path);
-                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-
-                FileInfo fi = new FileInfo(path);
-                StreamWriter sw = new StreamWriter(fi.Create());
-
-                sw.Write(LitJson.JsonMapper.ToJson(allData));
-                sw.Close();
-                Debug.Log("save ok: " + path);
-            }
-
-        }
-        else
-        {
-            Debug.Log("save faile: camera==null");
-        }
-    }
-    void ReadConfig()
-    {
-        GameObject camera = GameObject.Find(script.fullMapCameraMaxName);
-
-        //if no manager object was found
-        if (camera != null)
-        {
-            string path = Application.streamingAssetsPath + "/Config/Camera.json";
-            FileInfo fi = new FileInfo(path);
-            if (fi != null)
-            {
-                if (fi.Exists)
-                {
-                    StreamReader sr = new StreamReader(fi.OpenRead());
-                    string json = sr.ReadToEnd();
-                    sr.Close();
-                    LitJson.JsonData allData = LitJson.JsonMapper.ToObject(json);
-                    if (allData.IsArray)
-                    {
-                        Vector3 pos = new Vector3((float)(double)allData[0], (float)(double)allData[1], (float)(double)allData[2]);
-                        Quaternion rot = new Quaternion((float)(double)allData[3], (float)(double)allData[4], (float)(double)allData[5], (float)(double)allData[6]);
-
-
-                        GameObject charactor = GameObject.Find(script.charactorName);
-
-                        if (charactor != null)
-                        {
-                            camera.transform.position = charactor.transform.TransformPoint(pos);
-                            camera.transform.rotation = rot;
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            Debug.Log("load faile: camera==null");
-        }
-
-        camera = GameObject.Find(script.fullMapCameraMinName);
-
-        //if no manager object was found
-        if (camera != null)
-        {
-            string path = Application.streamingAssetsPath + "/Config/Camera.json";
-            FileInfo fi = new FileInfo(path);
-            if (fi != null)
-            {
-                if (fi.Exists)
-                {
-
-                    StreamReader sr = new StreamReader(fi.OpenRead());
-                    string json = sr.ReadToEnd();
-                    sr.Close();
-                    LitJson.JsonData allData = LitJson.JsonMapper.ToObject(json);
-                    if (allData.IsArray)
-                    {
-                        Vector3 pos = new Vector3((float)(double)allData[7], (float)(double)allData[8], (float)(double)allData[9]);
-                        Quaternion rot = new Quaternion((float)(double)allData[10], (float)(double)allData[11], (float)(double)allData[12], (float)(double)allData[13]);
-
-
-                        GameObject charactor = GameObject.Find(script.charactorName);
-
-                        if (charactor != null)
-                        {
-                            camera.transform.position = charactor.transform.TransformPoint(pos);
-                            camera.transform.rotation = rot;
-                        }
-                    }
-                }
-
-            }
-        }
-        else
-        {
-            Debug.Log("load faile: camera==null");
         }
     }
     public void OnSceneGUI()

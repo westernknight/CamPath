@@ -106,10 +106,6 @@ public class FunnyCamera : MonoBehaviour
     float cameraWorldHeight;
 
     /// <summary>
-    /// 记录地图的大小
-    /// </summary>
-    Vector2 mapSize = new Vector2();
-    /// <summary>
     /// 初始化顶视角camera的位置，是通过fullMax camera与焦点计算出来的 
     /// </summary>
     Vector3 initUpCameraPosition;
@@ -123,7 +119,8 @@ public class FunnyCamera : MonoBehaviour
     float wfovRad;
     float hfovAngle;
     float wfovAngle;
-
+    //最大摄像机绕焦点旋转的角度
+    float mapAngle;
     
     #endregion
 
@@ -140,9 +137,6 @@ public class FunnyCamera : MonoBehaviour
         maxRot = GameObject.Find(CamPathManager.instance.fullMapCameraMaxName).transform.rotation;
         minRot = GameObject.Find(CamPathManager.instance.fullMapCameraMinName).transform.rotation;
 
-       
-
-
         transform.position = actuallyPos = maxPos;
         transform.rotation = maxRot;
         isLerpTarget = false;
@@ -151,6 +145,14 @@ public class FunnyCamera : MonoBehaviour
         if (focusObject)
         {
             distance = Vector3.Distance(transform.position, focusObject.transform.position);
+            //现在的方向     摄像机-焦点
+            Vector3 currentDirect = maxPos - focusObject.transform.position;
+
+            //计算现在的方向投影到xz平面上
+            Vector3 currentDirectToXZPlaneVec = currentDirect;
+            currentDirectToXZPlaneVec.y = 0;
+            //最终保存角度
+            mapAngle = Vector3.Angle(currentDirectToXZPlaneVec, Vector3.right);//x轴对着镜头，所以是以Vector3.right轴取角度
         }
         accumulateZoom = accumulateZoomMax;
         calculationParam = new GameObject("calc");
@@ -169,11 +171,6 @@ public class FunnyCamera : MonoBehaviour
 
         cameraWorldWidth = Mathf.Tan(wfovRad) * distance;
         cameraWorldHeight = Mathf.Tan(hfovRad) * distance;
-
-        MapManager.Init();
-        mapSize.x = MapManager.Instance.cellDiameterSize * MapManager.Instance.totalColNum;
-        mapSize.y = MapManager.Instance.cellDiameterSize * MapManager.Instance.totalRowNum;
-
 
 
 
@@ -326,7 +323,7 @@ public class FunnyCamera : MonoBehaviour
 
     
                 //控制摄像机范围
-                Vector3 direct = Quaternion.AngleAxis(CamPathManager.instance.mapAngle, Vector3.up) * (-brelpos);
+                Vector3 direct = Quaternion.AngleAxis(mapAngle, Vector3.up) * (-brelpos);
                 ReCalculateCameraPosition(upCameraPosition + direct);
 
                 lastMousePosition = newMousePos;
@@ -354,47 +351,7 @@ public class FunnyCamera : MonoBehaviour
 
         Vector3 tmp = upCameraPosition;
         upCameraPosition = targetPos;
-        //4-3
-        //| |
-        //1-2
 
-#if false //第二种边界算法
-      if ((tmp - point4).z < 0)
-        {
-            upCameraPosition.z += -(tmp - point4).z;
-        }
-        if ((tmp - point4).x < 0)
-        {
-            upCameraPosition.x += -(tmp - point4).x;
-        }
-        if ((tmp - point2).z > mapSize.x)
-        {
-
-            upCameraPosition.z -= (tmp - point2).z - mapSize.x;
-        }
-        if ((tmp - point2).x > mapSize.y)
-        {
-            upCameraPosition.x -= (tmp - point2).x - mapSize.y;
-        }
-#else
-        //|<-z轴->|   x轴
-        if (upCameraPosition.z < cameraWorldWidth)
-        {
-            upCameraPosition.z = cameraWorldWidth;
-        }
-        else if (upCameraPosition.z > mapSize.x - cameraWorldWidth)
-        {
-            upCameraPosition.z = mapSize.x - cameraWorldWidth;
-        }
-        if (upCameraPosition.x < cameraWorldHeight)
-        {
-            upCameraPosition.x = cameraWorldHeight;
-        }
-        else if (upCameraPosition.x > mapSize.y - cameraWorldHeight)
-        {
-            upCameraPosition.x = mapSize.y - cameraWorldHeight;
-        }
-#endif
         //ray cast to floor
         
        calculationParam.transform.position = upCameraPosition;
@@ -426,50 +383,6 @@ public class FunnyCamera : MonoBehaviour
     #region Private Custom Function Region
 
 
-
-#if false
-       private void CentrePositionTrace()
-    {
-        centrePositionRay.origin = transform.position;
-        centrePositionRay.direction = transform.forward;
-
-
-
-        if (Physics.Raycast(centrePositionRay, out rayInfo))
-        {
-            //其实这里是做击中判断操作
-            centrePosition = rayInfo.point;
-        }
-    }
-    private void MapLitmitCalculate()
-    {
-        real_width = distance * Screen.width * Mathf.Tan(Camera.main.fieldOfView / 2 * Mathf.Deg2Rad) / Screen.height;
-        real_height = distance * Mathf.Tan(Camera.main.fieldOfView / 2 * Mathf.Deg2Rad);
-        centrePositionRay = new Ray(transform.position, transform.forward);
-    }
-
-    private void MapLitmitJudge(ref Vector3 Pos)
-    {
-        return;
-        if (centrePosition.z + Mathf.Abs(Pos.z) + real_width > litmit_maxZ)
-        {
-            Pos.z -= centrePosition.z + Mathf.Abs(Pos.z) + real_width - litmit_maxZ;
-            //Pos.z = litmit_maxZ - real_width;
-        }
-        if (centrePosition.z - Mathf.Abs(Pos.z) - real_width < litmit_minZ)
-        {
-            Pos.z += litmit_minZ - (centrePosition.z - Mathf.Abs(Pos.z) - real_width);
-        }
-        if (centrePosition.x + Mathf.Abs(Pos.x) + real_height > litmit_maxX)
-        {
-            Pos.x -= centrePosition.x + Mathf.Abs(Pos.x) + real_height - litmit_maxX;
-        }
-        if (centrePosition.x - Mathf.Abs(Pos.x) - real_height < litmit_minX)
-        {
-            Pos.x += litmit_minX - (centrePosition.x - Mathf.Abs(Pos.x) - real_height);
-        }
-    }
-#endif
 
     #endregion
 }
